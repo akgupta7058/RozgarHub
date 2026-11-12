@@ -4,41 +4,45 @@ import {
   setDoc,
   doc,
   getDocs,
+  getDoc,
   updateDoc,
+  deleteDoc,
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from '../firebase/config';
-import { Worker, NewWorkerInput } from '../types/worker';
-import { SAMPLE_WORKERS } from '../data/sampleWorkers';
+import { Worker, NewWorkerInput, SpamReport, WorkerStatus } from '../types/worker';
 
 const WORKERS_COLLECTION = 'workers';
 
 /**
- * Seed initial sample workers into Firestore if collection is empty
+ * Clean up all legacy test/dummy worker documents (e.g. sample_*)
+ * so only real submitted workers exist.
  */
-export async function seedInitialWorkersIfEmpty(): Promise<void> {
+export async function cleanUpDummyWorkers(): Promise<void> {
   try {
     const colRef = collection(db, WORKERS_COLLECTION);
     const snapshot = await getDocs(colRef);
+    const deletePromises: Promise<void>[] = [];
 
-    if (snapshot.empty) {
-      console.log('RozgarHub: Seeding initial 6 realistic Indian worker profiles...');
-      for (let i = 0; i < SAMPLE_WORKERS.length; i++) {
-        const item = SAMPLE_WORKERS[i];
-        const docId = `sample_${i + 1}_${item.category.toLowerCase()}`;
-        await setDoc(doc(db, WORKERS_COLLECTION, docId), {
-          ...item,
-          id: docId,
-        });
+    snapshot.forEach((docSnap) => {
+      const docId = docSnap.id;
+      // Delete sample_* or unverified dummy seed workers
+      if (docId.startsWith('sample_')) {
+        deletePromises.push(deleteDoc(docSnap.ref));
       }
-      console.log('RozgarHub: Seeding completed successfully.');
+    });
+
+    if (deletePromises.length > 0) {
+      await Promise.all(deletePromises);
+      console.log(`RozgarHub: Purged ${deletePromises.length} dummy/sample profiles.`);
     }
   } catch (error) {
-    console.warn('Could not auto-seed sample workers to Firestore:', error);
+    console.warn('Could not clean up dummy workers:', error);
   }
 }
 
 /**
  * Real-time listener for workers collection
+ * Returns all workers (used by Admin Dashboard and Home Screen filtering)
  */
 export function subscribeToWorkers(
   onSuccess: (workers: Worker[]) => void,
@@ -46,48 +50,55 @@ export function subscribeToWorkers(
 ): () => void {
   const colRef = collection(db, WORKERS_COLLECTION);
 
-  // Trigger seed check in background
-  seedInitialWorkersIfEmpty().catch((err) => {
-    console.warn('Seed check failed:', err);
+  // Trigger one-time cleanup of legacy sample profiles
+  cleanUpDummyWorkers().catch((err) => {
+    console.warn('Cleanup check error:', err);
   });
 
   const unsubscribe = onSnapshot(
     colRef,
     (snapshot) => {
-      if (snapshot.empty) {
-        // If snapshot is empty, fallback to sample workers so UI is never blank
-        const fallbackList: Worker[] = SAMPLE_WORKERS.map((w, idx) => ({
-          ...w,
-          id: `sample_${idx + 1}`,
-        }));
-        onSuccess(fallbackList);
-        return;
-      }
-
       const workers: Worker[] = [];
       snapshot.forEach((docSnap) => {
+        const docId = docSnap.id;
+        // Skip any sample_* documents
+        if (docId.startsWith('sample_')) {
+          return;
+        }
+
         const data = docSnap.data();
+        const spamCount = Number(data.spamCount) || 0;
+        let status: WorkerStatus = data.status || 'pending';
+
+        // Auto-block rule: if spamCount >= 3, enforce blocked status
+        if (spamCount >= 3 && status !== 'blocked') {
+          status = 'blocked';
+        }
+
         workers.push({
           id: docSnap.id,
           name: data.name ?? 'Karmachari',
-          category: data.category ?? 'Labour',
+          category: data.category ?? 'Rajmistri',
           dailyRate: Number(data.dailyRate) || 500,
-          experienceYears: Number(data.experienceYears) || 1,
-          phone: data.phone ?? '9876543210',
-          city: data.city ?? 'Delhi NCR',
-          area: data.area ?? 'Local Area',
+          experienceYears: Number(data.experienceYears) || 0,
+          phone: data.phone ?? '',
+          city: data.city ?? '',
+          area: data.area ?? '',
           description: data.description ?? '',
-          verified: data.verified ?? true,
-          rating: Number(data.rating) || 4.8,
-          reviewsCount: Number(data.reviewsCount) || 15,
+          photoBase64: data.photoBase64 || '',
+          status,
+          spamCount,
+          reports: Array.isArray(data.reports) ? data.reports : [],
+          verified: data.verified ?? (status === 'approved'),
+          rating: Number(data.rating) || 5.0,
+          reviewsCount: Number(data.reviewsCount) || 1,
           availableToday: data.availableToday ?? true,
-          avatarUrl: data.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces&q=80',
           skills: Array.isArray(data.skills) ? data.skills : [],
           createdAt: data.createdAt || new Date().toISOString(),
         });
       });
 
-      // Sort by newest first or highest rating
+      // Sort: newest first
       workers.sort((a, b) => {
         const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -98,13 +109,6 @@ export function subscribeToWorkers(
     },
     (err) => {
       console.error('Firestore subscription error:', err);
-      // Fallback to sample data so customer experience is smooth
-      const fallbackList: Worker[] = SAMPLE_WORKERS.map((w, idx) => ({
-        ...w,
-        id: `sample_${idx + 1}`,
-      }));
-      onSuccess(fallbackList);
-
       if (onError) {
         try {
           handleFirestoreError(err, OperationType.LIST, WORKERS_COLLECTION);
@@ -120,6 +124,7 @@ export function subscribeToWorkers(
 
 /**
  * Register a new worker profile
+ * Default status: 'pending', spamCount: 0, reports: []
  */
 export async function createWorkerProfile(input: NewWorkerInput): Promise<string> {
   const cleanId = `w_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -135,12 +140,15 @@ export async function createWorkerProfile(input: NewWorkerInput): Promise<string
     city: input.city.trim(),
     area: input.area.trim(),
     description: input.description.trim(),
-    verified: true, // Auto-verified in RozgarHub
+    photoBase64: input.photoBase64,
+    status: 'pending', // Pending WhatsApp / Admin verification
+    spamCount: 0,
+    reports: [],
+    verified: false,
     rating: 5.0,
-    reviewsCount: 1,
+    reviewsCount: 0,
     availableToday: input.availableToday ?? true,
-    avatarUrl: input.avatarUrl || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=faces&q=80',
-    skills: input.skills && input.skills.length > 0 ? input.skills : [input.category + ' Kaam'],
+    skills: input.skills && input.skills.length > 0 ? input.skills : [input.category],
     createdAt: new Date().toISOString(),
   };
 
@@ -153,7 +161,91 @@ export async function createWorkerProfile(input: NewWorkerInput): Promise<string
 }
 
 /**
- * Update worker availability status
+ * Admin Action: Update worker status (Approve, Block, or Pending)
+ */
+export async function updateWorkerStatus(
+  workerId: string,
+  newStatus: WorkerStatus,
+  resetSpam: boolean = false
+): Promise<void> {
+  const docRef = doc(db, WORKERS_COLLECTION, workerId);
+  try {
+    const updateData: Partial<Worker> = {
+      status: newStatus,
+      verified: newStatus === 'approved',
+    };
+    if (resetSpam) {
+      updateData.spamCount = 0;
+    }
+    await updateDoc(docRef, updateData as any);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `${WORKERS_COLLECTION}/${workerId}`);
+  }
+}
+
+/**
+ * Admin Action: Permanently delete a worker document
+ */
+export async function deleteWorkerPermanently(workerId: string): Promise<void> {
+  const docRef = doc(db, WORKERS_COLLECTION, workerId);
+  try {
+    await deleteDoc(docRef);
+  } catch (error) {
+    handleFirestoreError(error, OperationType.DELETE, `${WORKERS_COLLECTION}/${workerId}`);
+  }
+}
+
+/**
+ * Customer Action: Report Spam / Dalal
+ * Increments spamCount, adds report record.
+ * 3-strike rule: If spamCount >= 3, automatically sets status to 'blocked'
+ */
+export async function reportWorkerSpam(
+  workerId: string,
+  reason: string,
+  details?: string
+): Promise<{ newSpamCount: number; isBlocked: boolean }> {
+  const docRef = doc(db, WORKERS_COLLECTION, workerId);
+
+  try {
+    const snap = await getDoc(docRef);
+    if (!snap.exists()) {
+      throw new Error('Worker profile not found');
+    }
+
+    const data = snap.data();
+    const currentSpamCount = Number(data.spamCount) || 0;
+    const currentReports: SpamReport[] = Array.isArray(data.reports) ? data.reports : [];
+
+    const newReport: SpamReport = {
+      id: `rep_${Date.now()}`,
+      reason,
+      details: details ? details.trim() : undefined,
+      createdAt: new Date().toISOString(),
+    };
+
+    const newSpamCount = currentSpamCount + 1;
+    const isBlocked = newSpamCount >= 3;
+
+    const updates: Partial<Worker> = {
+      spamCount: newSpamCount,
+      reports: [...currentReports, newReport],
+    };
+
+    if (isBlocked) {
+      updates.status = 'blocked';
+      updates.verified = false;
+    }
+
+    await updateDoc(docRef, updates as any);
+    return { newSpamCount, isBlocked };
+  } catch (error) {
+    handleFirestoreError(error, OperationType.UPDATE, `${WORKERS_COLLECTION}/${workerId}`);
+  }
+}
+
+/**
+ * Update worker availability toggle
  */
 export async function toggleWorkerAvailability(workerId: string, currentStatus: boolean): Promise<void> {
   const docRef = doc(db, WORKERS_COLLECTION, workerId);

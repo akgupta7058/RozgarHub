@@ -1,17 +1,19 @@
 import React from 'react';
-import { Sparkles, UserPlus, Shield, Smartphone, Monitor } from 'lucide-react';
+import { Sparkles, UserPlus, Shield, Smartphone, Monitor, Lock } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface TopHeaderProps {
   onOpenRegistration: () => void;
   isMobileFrame: boolean;
   onToggleFrame: () => void;
+  onOpenAdmin?: () => void;
 }
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
   onOpenRegistration,
   isMobileFrame,
   onToggleFrame,
+  onOpenAdmin,
 }) => {
   return (
     <header className="bg-[#1E3A8A] text-white shadow-lg sticky top-0 z-30">
@@ -24,6 +26,18 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
         <div className="flex items-center gap-2">
           {/* PWA Install Button */}
           <PWAInstallButton variant="header" />
+
+          {/* Secret Admin Button */}
+          {onOpenAdmin && (
+            <button
+              onClick={onOpenAdmin}
+              className="flex items-center gap-0.5 text-[10px] bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white px-2 py-0.5 rounded cursor-pointer transition-colors"
+              title="Secret Admin Access"
+            >
+              <Lock size={9} />
+              <span>Admin</span>
+            </button>
+          )}
 
           {/* View toggle button */}
           <button

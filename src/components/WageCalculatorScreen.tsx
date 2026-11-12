@@ -232,8 +232,10 @@ export const WageCalculatorScreen: React.FC<WageCalculatorProps> = ({
               >
                 <option value="Plumber">Plumber</option>
                 <option value="Electrician">Electrician</option>
-                <option value="Painter">Painter</option>
-                <option value="Carpenter">Carpenter</option>
+                <option value="Painter / POP">Painter / POP</option>
+                <option value="Carpenter (Badhai)">Carpenter (Badhai)</option>
+                <option value="Tile & Marble Mistri">Tile & Marble Mistri</option>
+                <option value="Welder (Lohe ka Kaam)">Welder (Lohe ka Kaam)</option>
               </select>
             </div>
 

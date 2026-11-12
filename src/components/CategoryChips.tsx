@@ -4,10 +4,15 @@ import {
   Hammer,
   HardHat,
   Briefcase,
+  Grid,
   Wrench,
   Zap,
   Paintbrush,
   Axe,
+  Flame,
+  Square,
+  Droplets,
+  Fan,
 } from 'lucide-react';
 import { CATEGORIES } from '../data/sampleWorkers';
 import { WorkCategory } from '../types/worker';
@@ -34,6 +39,8 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
         return <HardHat size={size} className={colorClass} />;
       case 'Briefcase':
         return <Briefcase size={size} className={colorClass} />;
+      case 'Grid':
+        return <Grid size={size} className={colorClass} />;
       case 'Wrench':
         return <Wrench size={size} className={colorClass} />;
       case 'Zap':
@@ -42,6 +49,14 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
         return <Paintbrush size={size} className={colorClass} />;
       case 'Axe':
         return <Axe size={size} className={colorClass} />;
+      case 'Flame':
+        return <Flame size={size} className={colorClass} />;
+      case 'Square':
+        return <Square size={size} className={colorClass} />;
+      case 'Droplets':
+        return <Droplets size={size} className={colorClass} />;
+      case 'Fan':
+        return <Fan size={size} className={colorClass} />;
       default:
         return <LayoutGrid size={size} className={colorClass} />;
     }
@@ -54,7 +69,7 @@ export const CategoryChips: React.FC<CategoryChipsProps> = ({
           Kaam Ka Category Chunein (Select Trade)
         </h2>
         <span className="text-[11px] font-medium text-blue-900 bg-blue-50 px-2 py-0.5 rounded-full">
-          Tap karein filter ke liye
+          12 Mukhya Kaam
         </span>
       </div>
 

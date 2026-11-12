@@ -14,8 +14,8 @@ import {
   BookmarkCheck,
   Sparkles,
   Check,
-  Building2,
-  BadgeIndianRupee,
+  ShieldAlert,
+  AlertTriangle,
 } from 'lucide-react';
 import { Worker } from '../types/worker';
 
@@ -24,6 +24,7 @@ interface WorkerProfileModalProps {
   onClose: () => void;
   isSaved?: boolean;
   onToggleSave?: (workerId: string) => void;
+  onReportSpam?: (worker: Worker) => void;
 }
 
 export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
@@ -31,6 +32,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
   onClose,
   isSaved = false,
   onToggleSave,
+  onReportSpam,
 }) => {
   const [copied, setCopied] = useState(false);
 
@@ -42,8 +44,17 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
   );
   const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodedWhatsappMsg}`;
 
+  // Initials fallback
+  const initials = worker.name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   const handleShare = async () => {
-    const shareText = `${worker.name} - ${worker.category} (${worker.city}) | Dihadi: ₹${worker.dailyRate}/din | RozgarHub par dekhein`;
+    const shareText = `${worker.name} - ${worker.category} (${worker.city}) | Dihadi: ₹${worker.dailyRate}/din | RozgarHub`;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -60,33 +71,6 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
       setTimeout(() => setCopied(false), 2500);
     }
   };
-
-  const sampleReviews = [
-    {
-      id: 1,
-      author: 'Rajesh Sharma',
-      location: worker.city,
-      rating: 5,
-      date: '2 din pehle',
-      comment: 'Samay par aaye aur kaam bahut safai se kiya. Dihadi rate bhi sahi liya.',
-    },
-    {
-      id: 2,
-      author: 'Vikas Agarwal (Makaan Malik)',
-      location: worker.area,
-      rating: 5,
-      date: 'Pichle hafte',
-      comment: 'Mehanti worker hain, koi bekar ki behas nahi. Kaam time par poora kiya.',
-    },
-    {
-      id: 3,
-      author: 'Sunil Verma (Thekedar)',
-      location: worker.city,
-      rating: 4.8,
-      date: '1 mahina pehle',
-      comment: 'Hamare site par 10 din kaam kiya, kabil-e-tareef hunar hai.',
-    },
-  ];
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex justify-center">
@@ -129,19 +113,22 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
 
         {/* Content Body */}
         <div className="flex-1 pb-32">
-          {/* Hero Banner with Worker Info */}
+          {/* Hero Banner with Worker Real Photo Info */}
           <div className="bg-gradient-to-b from-[#1E3A8A] via-[#1E3A8A] to-[#F8FAFC] pt-4 pb-6 px-4 text-white">
             <div className="flex flex-col items-center text-center">
               <div className="relative mb-3">
-                <img
-                  src={worker.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces&q=80'}
-                  alt={worker.name}
-                  className="w-24 h-24 rounded-3xl object-cover border-4 border-white shadow-xl"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src =
-                      'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=faces&q=80';
-                  }}
-                />
+                {worker.photoBase64 ? (
+                  <img
+                    src={worker.photoBase64}
+                    alt={worker.name}
+                    className="w-24 h-24 rounded-3xl object-cover border-4 border-white shadow-xl"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-3xl bg-blue-950 text-white font-extrabold text-2xl flex items-center justify-center border-4 border-white shadow-xl">
+                    {initials || 'WK'}
+                  </div>
+                )}
+
                 {worker.availableToday && (
                   <span className="absolute -bottom-1 -right-1 bg-emerald-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full border-2 border-white shadow-sm flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
@@ -154,7 +141,7 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
                 <h1 className="text-xl font-extrabold text-white">{worker.name}</h1>
                 {worker.verified && (
                   <span title="Verified Worker">
-                    <ShieldCheck size={20} className="fill-blue-200 text-blue-900" />
+                    <ShieldCheck size={20} className="fill-emerald-200 text-emerald-900" />
                   </span>
                 )}
               </div>
@@ -172,10 +159,10 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               <div className="flex items-center gap-1 mt-2.5 bg-white/10 backdrop-blur-xs px-3 py-1 rounded-full text-xs">
                 <Star size={14} className="fill-amber-400 text-amber-400" />
                 <span className="font-bold text-white">
-                  {worker.rating ? worker.rating.toFixed(1) : '4.8'} out of 5
+                  {worker.rating ? worker.rating.toFixed(1) : '5.0'} / 5.0
                 </span>
                 <span className="text-blue-200 text-[11px]">
-                  ({worker.reviewsCount || 15} grahak santusht)
+                  (Asli Worker)
                 </span>
               </div>
             </div>
@@ -266,56 +253,30 @@ export const WorkerProfileModal: React.FC<WorkerProfileModalProps> = ({
               </div>
             )}
 
-            {/* Trust & Guarantee Banner */}
-            <div className="bg-blue-50/70 border border-blue-100 rounded-2xl p-3.5 text-xs text-slate-700 space-y-1.5">
-              <div className="font-bold text-[#1E3A8A] flex items-center gap-1.5">
-                <ShieldCheck size={16} className="text-[#1E3A8A]" />
-                <span>RozgarHub Trust Guarantee</span>
-              </div>
-              <ul className="text-[11px] text-slate-600 space-y-1 pl-5 list-disc">
-                <li>Seedha baat karein — Koi thekedari commission nahi.</li>
-                <li>Kaam dekhkar dihadi tay karein.</li>
-                <li>Number direct dialer aur WhatsApp se connected hai.</li>
-              </ul>
-            </div>
-
-            {/* Reviews Section */}
-            <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                  <Star size={15} className="fill-amber-400 text-amber-500" />
-                  <span>Grahako Ki Rayi (Customer Feedback)</span>
-                </h3>
-                <span className="text-[11px] text-slate-500 font-medium">
-                  {sampleReviews.length} Reviews
-                </span>
+            {/* Prominent Customer Safety & Report Spam Card */}
+            <div className="bg-red-50/80 border border-red-200 rounded-2xl p-4 space-y-3">
+              <div className="flex items-start gap-2.5">
+                <ShieldAlert size={20} className="text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-xs font-black text-red-950">
+                    Grahak Suraksha & Anti-Dalal Notice
+                  </h4>
+                  <p className="text-[11px] text-red-800 leading-relaxed mt-0.5">
+                    Agar yeh worker fake hai, dalali karta hai, ya phone par galat vyavahar karta hai toh turant report karein. 3 reports milte hi yeh app se hamesha ke liye block ho jayega.
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-2.5">
-                {sampleReviews.map((rev) => (
-                  <div
-                    key={rev.id}
-                    className="p-3 bg-slate-50/70 rounded-xl border border-slate-100 text-xs"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-bold text-slate-900">{rev.author}</span>
-                      <span className="text-[10px] text-slate-400">{rev.date}</span>
-                    </div>
-                    <div className="flex items-center gap-1 mt-0.5 mb-1.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          size={11}
-                          className="fill-amber-400 text-amber-400"
-                        />
-                      ))}
-                    </div>
-                    <p className="text-slate-600 text-[11px] leading-relaxed">
-                      "{rev.comment}"
-                    </p>
-                  </div>
-                ))}
-              </div>
+              {onReportSpam && (
+                <button
+                  type="button"
+                  onClick={() => onReportSpam(worker)}
+                  className="w-full py-2.5 px-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs shadow-md shadow-red-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <ShieldAlert size={15} />
+                  <span>Report Spam / Dalal</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

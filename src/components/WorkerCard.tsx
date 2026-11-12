@@ -9,7 +9,7 @@ import {
   Bookmark,
   BookmarkCheck,
   ArrowRight,
-  Zap,
+  ShieldAlert,
 } from 'lucide-react';
 import { Worker } from '../types/worker';
 
@@ -18,6 +18,7 @@ interface WorkerCardProps {
   onOpenProfile: (worker: Worker) => void;
   isSaved?: boolean;
   onToggleSave?: (workerId: string) => void;
+  onReportSpam?: (worker: Worker) => void;
 }
 
 export const WorkerCard: React.FC<WorkerCardProps> = ({
@@ -25,79 +26,44 @@ export const WorkerCard: React.FC<WorkerCardProps> = ({
   onOpenProfile,
   isSaved = false,
   onToggleSave,
+  onReportSpam,
 }) => {
-  const getCategoryTheme = (category: string) => {
-    switch (category) {
-      case 'Rajmistri':
-        return {
-          bg: 'bg-amber-50 text-amber-900 border-amber-200',
-          badge: 'bg-amber-600 text-white',
-          iconText: 'राजमिस्त्री',
-        };
-      case 'Labour':
-        return {
-          bg: 'bg-yellow-50 text-yellow-900 border-yellow-200',
-          badge: 'bg-yellow-600 text-white',
-          iconText: 'मजदूर',
-        };
-      case 'Thekedar':
-        return {
-          bg: 'bg-purple-50 text-purple-900 border-purple-200',
-          badge: 'bg-purple-700 text-white',
-          iconText: 'ठेकेदार',
-        };
-      case 'Plumber':
-        return {
-          bg: 'bg-cyan-50 text-cyan-900 border-cyan-200',
-          badge: 'bg-cyan-700 text-white',
-          iconText: 'प्लम्बर',
-        };
-      case 'Electrician':
-        return {
-          bg: 'bg-amber-50 text-amber-900 border-amber-200',
-          badge: 'bg-amber-600 text-white',
-          iconText: 'इलेक्ट्रीशियन',
-        };
-      case 'Painter':
-        return {
-          bg: 'bg-pink-50 text-pink-900 border-pink-200',
-          badge: 'bg-pink-600 text-white',
-          iconText: 'पेंटर',
-        };
-      default:
-        return {
-          bg: 'bg-blue-50 text-blue-900 border-blue-200',
-          badge: 'bg-blue-700 text-white',
-          iconText: 'कारीगर',
-        };
-    }
-  };
-
-  const theme = getCategoryTheme(worker.category);
   const cleanPhone = worker.phone.replace(/\D/g, '');
   const encodedWhatsappMsg = encodeURIComponent(
     'Namaste, maine RozgarHub app par aapki profile dekhi, mujhe kaam ke liye baat karni hai'
   );
   const whatsappUrl = `https://wa.me/91${cleanPhone}?text=${encodedWhatsappMsg}`;
 
+  // Initials fallback (e.g. Ramesh Kumar -> RK)
+  const initials = worker.name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <div
       onClick={() => onOpenProfile(worker)}
-      className="group relative bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.99]"
+      className="group relative bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer active:scale-[0.99]"
     >
-      {/* Top row: Avatar, Info, and Bookmark */}
+      {/* Top row: Real Photo, Info, and Actions */}
       <div className="flex items-start gap-3.5">
         <div className="relative flex-shrink-0">
-          <img
-            src={worker.avatarUrl || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=faces&q=80'}
-            alt={worker.name}
-            className="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100 shadow-xs"
-            loading="lazy"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop&crop=faces&q=80';
-            }}
-          />
+          {worker.photoBase64 ? (
+            <img
+              src={worker.photoBase64}
+              alt={worker.name}
+              className="w-14 h-14 rounded-2xl object-cover border-2 border-slate-100 shadow-xs"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-14 h-14 rounded-2xl bg-[#1E3A8A] text-white font-extrabold text-base flex items-center justify-center border-2 border-slate-100 shadow-xs">
+              {initials || 'WK'}
+            </div>
+          )}
+
           {worker.availableToday && (
             <span
               title="Aaj kaam ke liye tayar"
@@ -111,42 +77,57 @@ export const WorkerCard: React.FC<WorkerCardProps> = ({
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-1">
             <div className="flex items-center gap-1.5 min-w-0">
-              <h3 className="font-bold text-slate-900 text-base leading-tight truncate">
+              <h3 className="font-extrabold text-slate-900 text-base leading-tight truncate">
                 {worker.name}
               </h3>
               {worker.verified && (
-                <span title="Aadhaar / ID Verified" className="text-blue-600 flex-shrink-0">
-                  <ShieldCheck size={16} className="fill-blue-100 text-blue-600" />
+                <span title="Asli Verified Profile" className="text-emerald-600 flex-shrink-0">
+                  <ShieldCheck size={16} className="fill-emerald-100 text-emerald-600" />
                 </span>
               )}
             </div>
 
-            {onToggleSave && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggleSave(worker.id);
-                }}
-                className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
-                  isSaved
-                    ? 'text-orange-500 bg-orange-50'
-                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-                }`}
-                aria-label="Bookmark worker"
-              >
-                {isSaved ? <BookmarkCheck size={18} /> : <Bookmark size={18} />}
-              </button>
-            )}
+            <div className="flex items-center gap-0.5">
+              {/* Report Spam / Dalal button on Card */}
+              {onReportSpam && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onReportSpam(worker);
+                  }}
+                  className="px-2 py-1 rounded-lg text-red-600 hover:bg-red-50 text-[10px] font-bold border border-red-200/70 flex items-center gap-1 transition-colors cursor-pointer"
+                  title="Report Fake, Dalal ya Galat Vyavahar"
+                >
+                  <ShieldAlert size={12} className="text-red-500" />
+                  <span>Report</span>
+                </button>
+              )}
+
+              {onToggleSave && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleSave(worker.id);
+                  }}
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                    isSaved
+                      ? 'text-orange-500 bg-orange-50'
+                      : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                  }`}
+                  aria-label="Bookmark worker"
+                >
+                  {isSaved ? <BookmarkCheck size={17} /> : <Bookmark size={17} />}
+                </button>
+              )}
+            </div>
           </div>
 
-          {/* Badges: Category & Experience */}
+          {/* Badges: Strict Category & Experience */}
           <div className="flex flex-wrap items-center gap-1.5 mt-1">
-            <span
-              className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${theme.bg}`}
-            >
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-blue-50 text-blue-900 border-blue-200">
               <span>{worker.category}</span>
-              <span className="text-[10px] opacity-75">({theme.iconText})</span>
             </span>
 
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700">
@@ -189,10 +170,7 @@ export const WorkerCard: React.FC<WorkerCardProps> = ({
         <div className="text-right flex items-center gap-1.5">
           <div className="inline-flex items-center gap-1 bg-amber-50 text-amber-800 px-2 py-1 rounded-lg text-xs font-bold border border-amber-200/60">
             <Star size={13} className="fill-amber-400 text-amber-500" />
-            <span>{worker.rating ? worker.rating.toFixed(1) : '4.8'}</span>
-            <span className="text-[10px] text-amber-600 font-normal">
-              ({worker.reviewsCount || 12})
-            </span>
+            <span>{worker.rating ? worker.rating.toFixed(1) : '5.0'}</span>
           </div>
           <span className="text-slate-300">
             <ArrowRight size={14} />

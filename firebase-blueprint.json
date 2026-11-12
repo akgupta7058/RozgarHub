@@ -2,7 +2,7 @@
   "entities": {
     "Worker": {
       "title": "Worker",
-      "description": "Registered blue-collar worker profile on RozgarHub",
+      "description": "Registered blue-collar worker profile on RozgarHub with anti-fake verification",
       "type": "object",
       "properties": {
         "name": {
@@ -13,12 +13,25 @@
         },
         "category": {
           "type": "string",
-          "description": "Work category / Trade",
-          "enum": ["Rajmistri", "Labour", "Thekedar", "Plumber", "Electrician", "Painter", "Carpenter", "Welder"]
+          "description": "Work category from strict 12 trades",
+          "enum": [
+            "Rajmistri",
+            "Labour / Majdoor",
+            "Thekedar",
+            "Tile & Marble Mistri",
+            "Plumber",
+            "Electrician",
+            "Painter / POP",
+            "Carpenter (Badhai)",
+            "Welder (Lohe ka Kaam)",
+            "Glass & Aluminium Work",
+            "Boring & Submersible Mistri",
+            "AC & Cooler Mistri"
+          ]
         },
         "dailyRate": {
           "type": "number",
-          "description": "Daily wage rate in Indian Rupees (Dihadi Rate)"
+          "description": "Daily wage rate in Indian Rupees"
         },
         "experienceYears": {
           "type": "number",
@@ -31,25 +44,36 @@
         },
         "city": {
           "type": "string",
-          "description": "City name",
-          "minLength": 2,
-          "maxLength": 60
+          "description": "City name"
         },
         "area": {
           "type": "string",
-          "description": "Area or Mohalla name",
-          "minLength": 2,
-          "maxLength": 100
+          "description": "Area or Mohalla name"
         },
         "description": {
           "type": "string",
-          "description": "Work summary and experience details",
-          "minLength": 5,
-          "maxLength": 1000
+          "description": "Work summary and experience details"
+        },
+        "photoBase64": {
+          "type": "string",
+          "description": "Client-compressed base64 JPEG photo of worker"
+        },
+        "status": {
+          "type": "string",
+          "description": "Approval status",
+          "enum": ["pending", "approved", "blocked"]
+        },
+        "spamCount": {
+          "type": "number",
+          "description": "Number of customer spam/dalal reports"
+        },
+        "reports": {
+          "type": "array",
+          "description": "List of complaint logs with reason and description"
         },
         "verified": {
           "type": "boolean",
-          "description": "Whether the worker identity/skills are verified"
+          "description": "Whether the worker identity is verified by Admin / WhatsApp"
         },
         "rating": {
           "type": "number",
@@ -63,11 +87,6 @@
           "type": "boolean",
           "description": "Whether worker is ready for work today"
         },
-        "avatarUrl": {
-          "type": "string",
-          "description": "Avatar image identifier or URL",
-          "maxLength": 500
-        },
         "skills": {
           "type": "array",
           "description": "List of specific skill tags"
@@ -77,7 +96,7 @@
           "description": "ISO timestamp of creation"
         }
       },
-      "required": ["name", "category", "dailyRate", "experienceYears", "phone", "city", "area", "description"]
+      "required": ["name", "category", "dailyRate", "experienceYears", "phone", "city", "area", "description", "status"]
     }
   },
   "firestore": {
