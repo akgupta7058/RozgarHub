@@ -1,0 +1,6 @@
+{
+  "name": "RozgarHub - Sahi Kaam, Sahi Daam",
+  "description": "Production-ready blue-collar worker discovery and registration platform for India with direct Call and WhatsApp connect.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

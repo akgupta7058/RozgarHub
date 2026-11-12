@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "Worker": {
+      "title": "Worker",
+      "description": "Registered blue-collar worker profile on RozgarHub",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full name of worker (Apna Poora Naam)",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "category": {
+          "type": "string",
+          "description": "Work category / Trade",
+          "enum": ["Rajmistri", "Labour", "Thekedar", "Plumber", "Electrician", "Painter", "Carpenter", "Welder"]
+        },
+        "dailyRate": {
+          "type": "number",
+          "description": "Daily wage rate in Indian Rupees (Dihadi Rate)"
+        },
+        "experienceYears": {
+          "type": "number",
+          "description": "Years of experience"
+        },
+        "phone": {
+          "type": "string",
+          "description": "10-digit Indian phone number",
+          "pattern": "^[6-9][0-9]{9}$"
+        },
+        "city": {
+          "type": "string",
+          "description": "City name",
+          "minLength": 2,
+          "maxLength": 60
+        },
+        "area": {
+          "type": "string",
+          "description": "Area or Mohalla name",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "description": {
+          "type": "string",
+          "description": "Work summary and experience details",
+          "minLength": 5,
+          "maxLength": 1000
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Whether the worker identity/skills are verified"
+        },
+        "rating": {
+          "type": "number",
+          "description": "Worker average rating out of 5"
+        },
+        "reviewsCount": {
+          "type": "number",
+          "description": "Number of completed ratings/reviews"
+        },
+        "availableToday": {
+          "type": "boolean",
+          "description": "Whether worker is ready for work today"
+        },
+        "avatarUrl": {
+          "type": "string",
+          "description": "Avatar image identifier or URL",
+          "maxLength": 500
+        },
+        "skills": {
+          "type": "array",
+          "description": "List of specific skill tags"
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of creation"
+        }
+      },
+      "required": ["name", "category", "dailyRate", "experienceYears", "phone", "city", "area", "description"]
+    }
+  },
+  "firestore": {
+    "/workers/{workerId}": {
+      "schema": {
+        "$ref": "#/entities/Worker"
+      },
+      "description": "Public directory of registered blue collar workers"
+    }
+  }
+}

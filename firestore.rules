@@ -1,0 +1,52 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidWorker(data) {
+      return data.keys().hasAll(['name', 'category', 'dailyRate', 'experienceYears', 'phone', 'city', 'area', 'description'])
+        && data.keys().hasOnly(['id', 'name', 'category', 'dailyRate', 'experienceYears', 'phone', 'city', 'area', 'description', 'verified', 'rating', 'reviewsCount', 'availableToday', 'avatarUrl', 'skills', 'createdAt'])
+        && data.name is string && data.name.size() >= 2 && data.name.size() <= 100
+        && data.category is string && data.category in ['Rajmistri', 'Labour', 'Thekedar', 'Plumber', 'Electrician', 'Painter', 'Carpenter', 'Welder']
+        && data.dailyRate is number && data.dailyRate >= 100 && data.dailyRate <= 50000
+        && data.experienceYears is number && data.experienceYears >= 0 && data.experienceYears <= 60
+        && data.phone is string && data.phone.matches('^[6-9][0-9]{9}$')
+        && data.city is string && data.city.size() >= 2 && data.city.size() <= 60
+        && data.area is string && data.area.size() >= 2 && data.area.size() <= 100
+        && data.description is string && data.description.size() >= 5 && data.description.size() <= 1000
+        && (!('verified' in data) || data.verified is bool)
+        && (!('rating' in data) || (data.rating is number && data.rating >= 0 && data.rating <= 5))
+        && (!('reviewsCount' in data) || (data.reviewsCount is number && data.reviewsCount >= 0))
+        && (!('availableToday' in data) || data.availableToday is bool)
+        && (!('avatarUrl' in data) || (data.avatarUrl is string && data.avatarUrl.size() <= 500))
+        && (!('skills' in data) || (data.skills is list && data.skills.size() <= 20))
+        && (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() <= 100));
+    }
+
+    // Workers collection: Public discovery and zero-friction worker registration
+    match /workers/{workerId} {
+      allow read: if true;
+      allow create: if isValidId(workerId) && isValidWorker(incoming());
+      allow update: if isValidId(workerId) && isValidWorker(incoming())
+                    && incoming().diff(existing()).affectedKeys().hasOnly(['rating', 'reviewsCount', 'availableToday', 'description', 'dailyRate', 'skills']);
+      allow delete: if false;
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
