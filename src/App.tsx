@@ -23,6 +23,8 @@ import { WageCalculatorScreen } from './components/WageCalculatorScreen';
 import { SavedWorkersScreen } from './components/SavedWorkersScreen';
 import { BottomNav, NavTab } from './components/BottomNav';
 import { POPULAR_CITIES } from './data/sampleWorkers';
+import { PWAInstallButton } from './components/PWAInstallButton';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 export default function App() {
   // Navigation & Screen View
@@ -202,6 +204,9 @@ export default function App() {
             Free
           </span>
         </div>
+
+        {/* PWA Install Banner */}
+        <PWAInstallButton variant="banner" />
 
         {/* Search Bar by Name or City/Area */}
         <div className="px-4">
@@ -423,6 +428,9 @@ export default function App() {
             onToggleSave={handleToggleSave}
           />
         )}
+
+        {/* Offline Connectivity Indicator */}
+        <OfflineIndicator />
       </div>
     </div>
   );

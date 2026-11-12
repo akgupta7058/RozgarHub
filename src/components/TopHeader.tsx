@@ -1,5 +1,6 @@
 import React from 'react';
 import { Sparkles, UserPlus, Shield, Smartphone, Monitor } from 'lucide-react';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface TopHeaderProps {
   onOpenRegistration: () => void;
@@ -21,6 +22,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
           <span className="text-[10px] text-emerald-400 font-sans font-semibold">● 5G VoLTE</span>
         </div>
         <div className="flex items-center gap-2">
+          {/* PWA Install Button */}
+          <PWAInstallButton variant="header" />
+
           {/* View toggle button */}
           <button
             onClick={onToggleFrame}

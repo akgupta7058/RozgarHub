@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FB923C" />
+      <stop offset="100%" stop-color="#EA580C" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+
+  <!-- Outer Glow Ring -->
+  <rect x="16" y="16" width="480" height="480" rx="96" fill="none" stroke="#3B82F6" stroke-width="4" stroke-opacity="0.25" />
+
+  <!-- Center Badge / Emblem -->
+  <g filter="url(#shadow)">
+    <!-- Orange Diamond / Shield Accent -->
+    <circle cx="256" cy="240" r="160" fill="url(#orangeGrad)" />
+    
+    <!-- White Inner Core -->
+    <circle cx="256" cy="240" r="144" fill="#FFFFFF" fill-opacity="0.08" />
+    
+    <!-- Stylized "R" with Trade Elements -->
+    <path d="M 200 140 L 275 140 C 315 140 342 165 342 205 C 342 245 315 268 275 270 L 335 340 L 285 340 L 235 278 L 200 278 L 200 340 L 160 340 L 160 140 Z M 200 178 L 200 240 L 270 240 C 292 240 304 228 304 209 C 304 190 292 178 270 178 Z" fill="#FFFFFF" />
+
+    <!-- Tiny Hammer Accent Tool Symbol -->
+    <path d="M 320 160 L 350 130 L 370 150 L 340 180 Z" fill="#FEF08A" />
+  </g>
+
+  <!-- Tagline Text at Bottom -->
+  <text x="256" y="445" font-family="system-ui, -apple-system, sans-serif" font-size="34" font-weight="900" fill="#FFFFFF" text-anchor="middle" letter-spacing="4">
+    ROZGAR<tspan fill="#FB923C">HUB</tspan>
+  </text>
+  <text x="256" y="475" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="600" fill="#93C5FD" text-anchor="middle" letter-spacing="1">
+    SAHI KAAM • SAHI DAAM
+  </text>
+</svg>
