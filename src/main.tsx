@@ -1,17 +1,19 @@
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
-import { registerSW } from 'virtual:pwa-register';
 
-// Register PWA service worker with auto-update
-registerSW({
-  immediate: true,
-  onNeedRefresh() {
-    console.log('RozgarHub PWA: Naya update uplabdh hai.');
-  },
-  onOfflineReady() {
-    console.log('RozgarHub PWA: App offline mode mein chalne ke liye ready hai.');
-  },
-});
+// Register Service Worker for Chrome PWA installability & offline capabilities
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js', { scope: '/' })
+      .then((registration) => {
+        console.log('RozgarHub PWA: Service Worker active with scope:', registration.scope);
+      })
+      .catch((err) => {
+        console.warn('RozgarHub PWA: Service Worker registration error:', err);
+      });
+  });
+}
 
 createRoot(document.getElementById('root')!).render(<App />);
